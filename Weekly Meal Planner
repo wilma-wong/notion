@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>餐食计划生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff6b6b;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --warning: #ffc107;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f9f7fe 0%, #e3f2fd 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .app-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .app-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(106, 17, 203, 0.4);
+        }
+        
+        .btn-accent {
+            background: var(--accent);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .plan-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        .week-plan {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .week-plan th {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .week-plan td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .week-plan tr {
+            transition: background-color 0.3s;
+        }
+        
+        .week-plan tr:nth-child(even) {
+            background-color: var(--light);
+        }
+        
+        .week-plan tr:hover {
+            background-color: #eef7ff;
+        }
+        
+        .app-stats {
+            display: flex;
+            justify-content: space-between;
+            background: #f1f8ff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            font-size: 0.95rem;
+            border: 1px solid #d0e7ff;
+        }
+        
+        .recipe-manager {
+            margin-top: 30px;
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .section-title {
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        input, .search-container {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, .search-container:focus-within {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+        
+        .meal-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .day-cell {
+            font-weight: 600;
+            width: 120px;
+        }
+        
+        .monday { color: var(--primary); }
+        .tuesday { color: var(--secondary); }
+        .wednesday { color: #00b4d8; }
+        .thursday { color: #00ce7c; }
+        .friday { color: #ff9e00; }
+        .saturday { color: var(--accent); }
+        .sunday { color: #ff3d67; }
+        
+        .meal-icon {
+            margin-right: 8px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .recipe-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            transition: all 0.3s;
+        }
+        
+        .recipe-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .recipe-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-top: 15px;
+            background: white;
+        }
+        
+        .delete-btn {
+            background: #ffebee;
+            color: #f44336;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .delete-btn:hover {
+            background: #f44336;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--success);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .week-plan tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .search-container i {
+            padding: 0 15px;
+            color: #777;
+        }
+        
+        .search-container input {
+            flex: 1;
+            border: none;
+            padding: 12px 0;
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .search-results {
+            position: absolute;
+            background: white;
+            width: calc(100% - 20px);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f0f7ff;
+        }
+        
+        .search-section {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .highlight {
+            background-color: #fff9c4;
+            font-weight: bold;
+        }
+        
+        .cuisine-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1565c0;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+        
+        .recipe-type {
+            font-size: 0.8rem;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        
+        .feature-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        @media (max-width: 768px) {
+            .app-controls {
+                flex-direction: column;
+            }
+            
+            .week-plan {
+                font-size: 0.9rem;
+            }
+            
+            .week-plan th, .week-plan td {
+                padding: 10px;
+            }
+            
+            .form-group {
+                flex-direction: column;
+            }
+            
+            .feature-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="app-title">
+                <i class="fas fa-utensils fa-2x"></i>
+                <div>
+                    <h1>餐食计划生成器</h1>
+                    <p class="subtitle">轻松计划一周餐食，告别选择困难 - 带食谱搜索功能</p>
+                </div>
+            </div>
+        </header>
+        
+        <div class="content">
+            <div class="feature-section">
+                <div class="feature-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>周计划生成</h3>
+                    <p>一键生成整周午餐和晚餐计划</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-search"></i>
+                    <h3>食谱搜索</h3>
+                    <p>快速查找数据库中的任何食谱</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-save"></i>
+                    <h3>数据保存</h3>
+                    <p>自动保存您的食谱数据库</p>
+                </div>
+            </div>
+            
+            <div class="app-controls">
+                <button class="btn" id="generateBtn">
+                    <i class="fas fa-sync-alt"></i> 生成本周餐食计划
+                </button>
+                <button class="btn btn-warning" id="addSampleBtn">
+                    <i class="fas fa-plus-circle"></i> 添加示例餐点
+                </button>
+                <button class="btn btn-accent" id="clearBtn">
+                    <i class="fas fa-trash-alt"></i> 清除所有数据
+                </button>
+                <button class="btn btn-success" id="exportBtn">
+                    <i class="fas fa-file-export"></i> 导出计划
+                </button>
+            </div>
+            
+            <div class="plan-container">
+                <table class="week-plan">
+                    <thead>
+                        <tr>
+                            <th width="15%">星期</th>
+                            <th width="42.5%">午餐</th>
+                            <th width="42.5%">晚餐</th>
+                        </tr>
+                    </thead>
+                    <tbody id="planBody">
+                        <tr>
+                            <td class="day-cell monday">Monday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                        <tr>
+                            <td class="day-cell tuesday">Tuesday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                        <tr>
+                            <td class="day-cell wednesday">Wednesday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                        <tr>
+                            <td class="day-cell thursday">Thursday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                        <tr>
+                            <td class="day-cell friday">Friday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                        <tr>
+                            <td class="day-cell saturday">Saturday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                        <tr>
+                            <td class="day-cell sunday">Sunday</td>
+                            <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                            <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="app-stats">
+                <div><i class="fas fa-list-alt"></i> 食谱数据库：<span id="recipeCount">0</span> 种餐点选择</div>
+                <div><i class="fas fa-history"></i> 最后生成：<span id="generationTime">-</span></div>
+            </div>
+            
+            <div class="recipe-manager">
+                <h2 class="section-title"><i class="fas fa-book"></i> 食谱数据库管理</h2>
+                
+                <div class="search-section">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="搜索食谱...">
+                    </div>
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+                
+                <div class="form-group">
+                    <input type="text" id="newRecipe" placeholder="输入新餐点名称 (例如: 番茄炒蛋)" maxlength="50">
+                    <button class="btn" id="addRecipeBtn"><i class="fas fa-plus"></i> 添加餐点</button>
+                </div>
+                
+                <div class="recipe-list" id="allRecipesList">
+                    <div class="empty-state">
+                        <i class="fas fa-book-open fa-2x" style="margin-bottom: 15px;"></i>
+                        <p>食谱数据库为空，请添加餐点</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 餐食计划生成器 | 数据保存在您的浏览器中 | 添加了强大的搜索功能</p>
+        </footer>
+    </div>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i> <span id="notificationText">操作成功</span>
+    </div>
+
+    <script>
+        // 食谱数据库 - 从localStorage加载或使用默认值
+        let recipes = JSON.parse(localStorage.getItem('mealPlannerRecipes')) || [
+            "日式咖喱饭", "宫保鸡丁", "番茄鸡蛋面", "青酱意大利面", "番茄肉酱面",
+            "波兰饺子(pyzy)", "卷心菜炖肉", "韩式拌饭", "泰式打抛猪肉", "soup + garlic bread", 
+            "spanish wrap", "ramen", "tomato pasta", "Korean rice cake", "steak", 
+            "fried eggs+potatoes", "salad+chicken", "japanese curry rice", "kimbap", "summer roll",
+            "Potugese chicken rice", "noodles soup", "pyzy + de volaille", "Taiwanese braised pork rice", 
+            "miso soup + gyoza", "sushi", "hamburger", "meatball", "pesto pasta", "garlic shrimps pasta", 
+            "pizza", "pad thai", "fried vermicelli", "fried rice", "grilled veggies", "chilli con carne", 
+            "quesadilla", "Singaporean fried vermicelli", "fried vermicelli with chinese pickle and pork",
+            "shanghai fried rice cake", "egg plant with minced pork", "Tikka masala + naan", "Budae jjigae", 
+            "Bibimbap", "risotto", "Paella", "Crepes", "Lasagne", "Gnocchi", "Tam Jai rice noodles", 
+            "Mixed Mixian (Rice noodles)", "Fried noodles", "Cola chicken wings", "baked pork chop rice", 
+            "shrimp fried egg rice", "HK Charsiu", "Kung Pao chicken", "Pineapple shrimp ball", "Sha cha beef", 
+            "Tomato pot roast beef", "garlic shrimps + bread", "Pork & Holy Basil Stir-fry", "Three cup chicken", 
+            "sha cha minced pork fried egg", "egg tofu", "baked pork chop rice", "Hainanese Chicken Rice", 
+            "Shanghai fried udon", "Braised Beef Brisket in Tomato Sauce", "KFC chicken wings", "fried tofu", 
+            "chicken stomach", "Korean but not Korean bimbap", "Basil chicken", "Honey soy garlic chicken with rice",
+            "Chicken Adobo with Steamed Rice", "Beef Rendang with Coconut Rice", "Sweet and Sour Pork with Fried Rice", 
+            "Butter Chicken with Garlic Naan", "Japanese Beef Curry with Steamed Rice", "Mapo Tofu with Minced Pork"
+        ];
+        
+        // 星期名称
+        const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        
+        // 保存食谱到localStorage
+        function saveRecipes() {
+            localStorage.setItem('mealPlannerRecipes', JSON.stringify(recipes));
+            showNotification("食谱已保存");
+        }
+        
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 更新食谱计数显示
+        function updateRecipeCount() {
+            document.getElementById('recipeCount').textContent = recipes.length;
+        }
+        
+        // 显示所有食谱
+        function displayAllRecipes(filter = '') {
+            const container = document.getElementById('allRecipesList');
+            
+            if (recipes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-book-open fa-2x" style="margin-bottom: 15px;"></i>
+                        <p>食谱数据库为空，请添加餐点</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            const filteredRecipes = filter ? 
+                recipes.filter(recipe => recipe.toLowerCase().includes(filter.toLowerCase())) : 
+                recipes;
+            
+            if (filteredRecipes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-2x" style="margin-bottom: 15px;"></i>
+                        <p>没有找到匹配的食谱</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredRecipes.forEach((recipe, index) => {
+                const recipeIndex = recipes.indexOf(recipe);
+                const recipeEl = document.createElement('div');
+                recipeEl.className = 'recipe-item';
+                
+                // 高亮匹配部分
+                let displayName = recipe;
+                if (filter) {
+                    const regex = new RegExp(filter, 'gi');
+                    displayName = recipe.replace(regex, match => `<span class="highlight">${match}</span>`);
+                }
+                
+                recipeEl.innerHTML = `
+                    <div>
+                        <i class="fas fa-utensils"></i> 
+                        <span>${displayName}</span>
+                    </div>
+                    <button class="delete-btn" data-index="${recipeIndex}">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                `;
+                container.appendChild(recipeEl);
+            });
+            
+            // 添加删除按钮事件
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    deleteRecipe(index);
+                });
+            });
+        }
+        
+        // 删除食谱
+        function deleteRecipe(index) {
+            if (confirm(`确定要删除 "${recipes[index]}" 吗？`)) {
+                recipes.splice(index, 1);
+                saveRecipes();
+                updateRecipeCount();
+                displayAllRecipes();
+                showNotification("餐点已删除");
+                
+                // 更新搜索显示
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput.value) {
+                    displayAllRecipes(searchInput.value);
+                }
+            }
+        }
+        
+        // 生成周计划
+        function generateWeeklyPlan() {
+            // 检查是否有足够的食谱
+            if (recipes.length < 14) {
+                showNotification(`⚠️ 需要至少14种餐点，当前只有 ${recipes.length} 种`);
+                return [];
+            }
+            
+            // 随机选择14道不重复的菜（7午餐+7晚餐）
+            const shuffled = [...recipes].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 14);
+            
+            // 组合成周计划
+            const plan = [];
+            for (let i = 0; i < 7; i++) {
+                plan.push({
+                    day: weekDays[i],
+                    lunch: selected[i],
+                    dinner: selected[i + 7]
+                });
+            }
+            
+            return plan;
+        }
+        
+        // 显示计划
+        function displayPlan(plan) {
+            const planBody = document.getElementById('planBody');
+            
+            if (plan.length === 0) {
+                planBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 30px;">生成计划失败，请添加更多餐点</td></tr>';
+                return;
+            }
+            
+            // 清空表格内容
+            planBody.innerHTML = '';
+            
+            plan.forEach(dayPlan => {
+                const row = document.createElement('tr');
+                
+                // 为每一天添加特定类名
+                const dayClass = dayPlan.day.toLowerCase();
+                
+                row.innerHTML = `
+                    <td class="day-cell ${dayClass}">${dayPlan.day}</td>
+                    <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> ${dayPlan.lunch}</span></td>
+                    <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> ${dayPlan.dinner}</span></td>
+                `;
+                
+                planBody.appendChild(row);
+            });
+            
+            // 更新生成时间
+            const now = new Date();
+            document.getElementById('generationTime').textContent = 
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                
+            showNotification("已生成新餐食计划");
+        }
+        
+        // 添加新餐点
+        function addNewRecipe() {
+            const newRecipeInput = document.getElementById('newRecipe');
+            const newRecipe = newRecipeInput.value.trim();
+            
+            if (!newRecipe) {
+                showNotification("请输入餐点名称");
+                return;
+            }
+            
+            if (recipes.includes(newRecipe)) {
+                showNotification("该餐点已存在");
+            } else {
+                recipes.push(newRecipe);
+                saveRecipes();
+                updateRecipeCount();
+                displayAllRecipes();
+                newRecipeInput.value = '';
+                newRecipeInput.focus();
+                showNotification(`"${newRecipe}" 已添加到数据库`);
+            }
+        }
+        
+        // 添加示例餐点
+        function addSampleRecipes() {
+            const sampleRecipes = [
+                "Teriyaki Salmon Bowl",
+                "Vegetable Stir-fry Noodles",
+                "Mushroom Risotto",
+                "BBQ Pulled Pork Sandwich",
+                "Greek Salad with Grilled Chicken",
+                "Beef and Broccoli",
+                "Vegetable Curry",
+                "Shrimp Tacos",
+                "Chicken Caesar Wrap",
+                "Vegetable Fried Rice"
+            ];
+            
+            sampleRecipes.forEach(recipe => {
+                if (!recipes.includes(recipe)) {
+                    recipes.push(recipe);
+                }
+            });
+            
+            saveRecipes();
+            updateRecipeCount();
+            displayAllRecipes();
+            showNotification('已添加10个示例餐点！');
+        }
+        
+        // 清除所有数据
+        function clearAllData() {
+            if (confirm("确定要清除所有数据吗？此操作不可撤销！")) {
+                localStorage.removeItem('mealPlannerRecipes');
+                recipes = [];
+                saveRecipes();
+                updateRecipeCount();
+                displayAllRecipes();
+                
+                // 重置计划表
+                const planBody = document.getElementById('planBody');
+                planBody.innerHTML = '';
+                for (let i = 0; i < 7; i++) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="day-cell">${weekDays[i]}</td>
+                        <td><span class="meal-name"><i class="fas fa-utensil-spoon meal-icon"></i> 等待生成...</span></td>
+                        <td><span class="meal-name"><i class="fas fa-moon meal-icon"></i> 等待生成...</span></td>
+                    `;
+                    planBody.appendChild(row);
+                }
+                
+                // 清空搜索
+                document.getElementById('searchInput').value = '';
+                document.getElementById('searchResults').classList.remove('active');
+                
+                showNotification("所有数据已清除");
+            }
+        }
+        
+        // 导出计划
+        function exportPlan() {
+            const planBody = document.getElementById('planBody');
+            let planText = "本周餐食计划\n\n";
+            
+            for (let i = 0; i < planBody.rows.length; i++) {
+                const row = planBody.rows[i];
+                const day = row.cells[0].textContent;
+                const lunch = row.cells[1].textContent;
+                const dinner = row.cells[2].textContent;
+                
+                planText += `${day}\n`;
+                planText += `午餐: ${lunch.replace("等待生成...", "")}\n`;
+                planText += `晚餐: ${dinner.replace("等待生成...", "")}\n\n`;
+            }
+            
+            const blob = new Blob([planText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'weekly_meal_plan.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("计划已导出");
+        }
+        
+        // 搜索食谱
+        function searchRecipes(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+            
+            if (!query) {
+                resultsContainer.classList.remove('active');
+                return;
+            }
+            
+            const filteredRecipes = recipes.filter(recipe => 
+                recipe.toLowerCase().includes(query.toLowerCase())
+            );
+            
+            if (filteredRecipes.length === 0) {
+                resultsContainer.innerHTML = `<div class="search-result-item">未找到匹配的食谱</div>`;
+            } else {
+                filteredRecipes.forEach(recipe => {
+                    const regex = new RegExp(query, 'gi');
+                    const highlighted = recipe.replace(regex, match => `<span class="highlight">${match}</span>`);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.innerHTML = highlighted;
+                    item.addEventListener('click', () => {
+                        document.getElementById('searchInput').value = recipe;
+                        resultsContainer.classList.remove('active');
+                    });
+                    resultsContainer.appendChild(item);
+                });
+            }
+            
+            resultsContainer.classList.add('active');
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRecipeCount();
+            displayAllRecipes();
+            
+            // 添加事件监听器
+            document.getElementById('generateBtn').addEventListener('click', () => {
+                const plan = generateWeeklyPlan();
+                displayPlan(plan);
+            });
+            
+            document.getElementById('addRecipeBtn').addEventListener('click', addNewRecipe);
+            
+            document.getElementById('addSampleBtn').addEventListener('click', addSampleRecipes);
+            
+            document.getElementById('clearBtn').addEventListener('click', clearAllData);
+            
+            document.getElementById('exportBtn').addEventListener('click', exportPlan);
+            
+            // 允许按Enter键添加餐点
+            document.getElementById('newRecipe').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addNewRecipe();
+                }
+            });
+            
+            // 搜索功能
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', () => {
+                searchRecipes(searchInput.value);
+            });
+            
+            // 点击搜索框外关闭搜索结果
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-section')) {
+                    document.getElementById('searchResults').classList.remove('active');
+                }
+            });
+            
+            // 首次加载时自动生成计划
+            if (recipes.length >= 14) {
+                const initialPlan = generateWeeklyPlan();
+                displayPlan(initialPlan);
+            }
+        });
+    </script>
+</body>
+</html>
